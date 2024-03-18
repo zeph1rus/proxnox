@@ -1,6 +1,5 @@
 use std::fmt;
 use std::os::macos::fs::MetadataExt;
-use std::path::PathBuf;
 
 use users::{get_current_uid, uid_t};
 use walkdir::WalkDir;
@@ -25,26 +24,30 @@ fn do_i_own_the_file(uid: u32) -> bool {
 }
 
 
-pub fn find_db(path: &str) -> Result<PathBuf, NotFoundError>{
+pub fn find_db(path: &str) -> Result<String, NotFoundError> {
     for entry in WalkDir::new(path) {
         match entry {
             Ok(path) => {
-                let path_str = path.clone().path();
-                if path.clone().into_path().to_str().unwrap().contains("com.apple.notification") {
-                    match path.clone().file_name().to_str().unwrap() {
+                let path_str = String::from(path.clone().into_path().to_str().unwrap());
+                let path_fn = String::from(path.clone().file_name().to_string_lossy());
+
+                if path_str.contains("com.apple.notification") {
+                    match path_fn.as_str() {
                         "db" => {
                             println!("Possible: {:?}", path);
                             match do_i_own_the_file(path.clone().metadata().unwrap().st_uid()) {
                                 true => {
                                     println!("I Own the file - Valid Notifications DB Found");
-                                    let valid_path: PathBuf = path.into_path().canonicalize().unwrap();
-                                    return Ok(valid_path)
+                                    return Ok(path_str);
                                 }
-                                false => {}
+                                false => {
+                                    println!("Found a db but I don't own it, ignoring");
+                                }
                             }
                         }
-                        _ => {}
-
+                        _ => {
+                            // file is not named "db" so we're ignoring it
+                        }
                     }
                 }
             }
@@ -54,5 +57,5 @@ pub fn find_db(path: &str) -> Result<PathBuf, NotFoundError>{
             }
         };
     }
-    return Err(NotFoundError)
+    return Err(NotFoundError);
 }
