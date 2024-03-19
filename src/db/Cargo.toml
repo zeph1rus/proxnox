@@ -1,11 +1,10 @@
-workspace = { members = ["src/db", "src/pn"] }
 [package]
-name = "proxnox"
+name = "db"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pn = { path = "src/pn" }
-db = { path = "src/db" }
+rusqlite = { version = "0.31.0", features = ["bundled"] }
+plist = "1"

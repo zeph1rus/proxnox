@@ -1,7 +1,7 @@
 use std::fmt;
 use std::os::macos::fs::MetadataExt;
 
-use users::{get_current_uid, uid_t};
+use users::get_current_uid;
 use walkdir::WalkDir;
 
 #[derive(Debug, Clone)]
@@ -13,13 +13,9 @@ impl fmt::Display for NotFoundError {
     }
 }
 
-fn what_is_my_uid() -> uid_t {
-    get_current_uid()
-}
-
 
 fn do_i_own_the_file(uid: u32) -> bool {
-    let cur_uid = what_is_my_uid();
+    let cur_uid = get_current_uid();
     cur_uid == uid
 }
 
