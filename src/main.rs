@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::thread;
 use std::time::Duration;
 
@@ -21,7 +20,12 @@ fn allow_notification(app_name: &str) -> bool {
     IGNORE_APPS.into_iter().all(|i| { !app_name.contains(i) })
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+
+fn print_sep() {
+    println!("{}", "_".repeat(40))
+}
+
+fn main() {
     println!("ProxNox - MacOS => Discord Notifications Forwarder");
 
     let args = Args::parse();
@@ -32,6 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let lastid = db::get_latest_notification_id(&x).unwrap();
     println!("Initial Notification ID: {:?}", lastid.id);
+    print_sep();
     let mut current_id: u32 = lastid.id;
 
     loop {
@@ -42,9 +47,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                     match allow_notification(&n.app) {
                         true => {
                             pn::try_send_notification(&n.notification_string(), &args.webhook);
+                            print_sep();
                         }
                         false => {
-                            println!("Notification ignored")
+                            println!("Notification ignored");
+                            print_sep();
                         }
                     }
                 }
@@ -56,6 +63,4 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         thread::sleep(Duration::from_secs(10));
     }
-
-    Ok(())
 }

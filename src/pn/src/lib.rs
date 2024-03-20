@@ -29,10 +29,14 @@ fn do_i_own_the_file(uid: u32) -> bool {
 
 
 pub fn try_send_notification(text: &str, webhook: &str) {
-    println!("Sending Notification: \n{}\n\n", text);
+    println!("Sending Notification: \n{}", text);
     let post_data = DiscordPost { content: text.parse().unwrap() };
     let client = reqwest::blocking::Client::new();
-    let _ = client.post(webhook).json(&post_data).send();
+    let res = client.post(webhook).json(&post_data).send();
+    match res {
+        Ok(_) => { println!("Notification Sent") }
+        Err(e) => { println!("Unable to send notification: {:?}", e) }
+    }
 }
 
 pub fn find_db(path: &str) -> Result<String, NotFoundError> {
