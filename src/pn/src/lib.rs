@@ -1,8 +1,16 @@
 use std::fmt;
 use std::os::macos::fs::MetadataExt;
 
+use reqwest;
+use serde::{Deserialize, Serialize};
 use users::get_current_uid;
 use walkdir::WalkDir;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DiscordPost {
+    content: String,
+}
+
 
 #[derive(Debug, Clone)]
 pub struct NotFoundError;
@@ -20,7 +28,15 @@ fn do_i_own_the_file(uid: u32) -> bool {
 }
 
 
+pub fn try_send_notification(text: &str, webhook: &str) {
+    println!("Sending Notification: \n{}\n\n", text);
+    let post_data = DiscordPost { content: text.parse().unwrap() };
+    let client = reqwest::blocking::Client::new();
+    let _ = client.post(webhook).json(&post_data).send();
+}
+
 pub fn find_db(path: &str) -> Result<String, NotFoundError> {
+    println!("Searching for notifications database");
     for entry in WalkDir::new(path) {
         match entry {
             Ok(path) => {
@@ -30,10 +46,10 @@ pub fn find_db(path: &str) -> Result<String, NotFoundError> {
                 if path_str.contains("com.apple.notification") {
                     match path_fn.as_str() {
                         "db" => {
-                            println!("Possible: {:?}", path);
+                            println!("Possible Notifications DB Found: {:?}", path);
                             match do_i_own_the_file(path.clone().metadata().unwrap().st_uid()) {
                                 true => {
-                                    println!("I Own the file - Valid Notifications DB Found");
+                                    println!("Found Notifications DB (file is owned by current user)");
                                     return Ok(path_str);
                                 }
                                 false => {

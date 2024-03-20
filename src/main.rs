@@ -1,19 +1,61 @@
-use std::string::ParseError;
+use std::error::Error;
+use std::thread;
+use std::time::Duration;
+
+use clap::Parser;
 
 use db;
+use db::LastId;
 use pn;
 
-fn main() -> Result<(), ParseError> {
-    println!("Hello, world!");
+const IGNORE_APPS: [&'static str; 2] = ["discord", "Discord"];
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    webhook: String,
+}
+
+fn allow_notification(app_name: &str) -> bool {
+    IGNORE_APPS.into_iter().all(|i| { !app_name.contains(i) })
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    println!("ProxNox - MacOS => Discord Notifications Forwarder");
+
+    let args = Args::parse();
+
+    println!("Sending to Webhook: {}", args.webhook);
 
     let x = pn::find_db("/private/var").unwrap();
-    println!("{:?}", x);
-    let lastid = db::get_latest_notification_id(&x).unwrap();
-    println!("Lastid: {:?}", lastid.id);
 
-    let last_minus_a_bit = db::LastId {
-        id: lastid.id - 50
-    };
-    let _ = db::get_new_notifications(last_minus_a_bit, &x);
+    let lastid = db::get_latest_notification_id(&x).unwrap();
+    println!("Initial Notification ID: {:?}", lastid.id);
+    let mut current_id: u32 = lastid.id;
+
+    loop {
+        let new_notifications = db::get_new_notifications(LastId { id: current_id }, &x);
+        match new_notifications {
+            Ok(notifications) => {
+                for n in notifications.notifications {
+                    match allow_notification(&n.app) {
+                        true => {
+                            pn::try_send_notification(&n.notification_string(), &args.webhook);
+                        }
+                        false => {
+                            println!("Notification ignored")
+                        }
+                    }
+                }
+                current_id = notifications.new_last_id;
+            }
+
+            _ => {}
+        }
+
+        thread::sleep(Duration::from_secs(10));
+    }
+
     Ok(())
 }

@@ -1,11 +1,13 @@
 workspace = { members = ["src/db", "src/pn"] }
 [package]
 name = "proxnox"
-version = "0.1.0"
+version = "0.4.0"
 edition = "2021"
+description = "A tool to forward MacOS notifications to Discord webhooks"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 pn = { path = "src/pn" }
 db = { path = "src/db" }
+clap = { version = "4.5.3", features = ["derive"] }

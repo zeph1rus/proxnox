@@ -1,4 +1,5 @@
 use std::fmt;
+use std::fmt::Debug;
 use std::io::Cursor;
 
 use plist::Value;
@@ -26,6 +27,13 @@ pub struct Notification {
     pub app: String,
 }
 
+impl Notification {
+    pub fn notification_string(&self) -> String {
+        format!("**New Notification from {}**\n*{}*\n{}", self.app, self.title, self.body)
+    }
+}
+
+
 #[derive(Debug, Clone)]
 pub struct RawNotification {
     pub rec_id: u32,
@@ -52,7 +60,7 @@ pub fn get_new_notifications(last_id: LastId, sqlite_db: &str) -> Result<GetNoti
     for r in rows {
         let raw_unwrapped = r.unwrap();
 
-        println!("Record: {:?}", &raw_unwrapped.rec_id);
+        println!("New Notification ID: {:?}", &raw_unwrapped.rec_id);
         new_last_id = raw_unwrapped.rec_id;
 
         // transform to a cursor which has read and seek traits.
