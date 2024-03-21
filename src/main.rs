@@ -3,11 +3,9 @@ use std::time::Duration;
 
 use clap::Parser;
 
-use db;
 use db::{get_latest_notification_id, LastId};
-use pn;
 
-const IGNORE_APPS: [&'static str; 2] = ["discord", "Discord"];
+const IGNORE_APPS: [&str; 2] = ["discord", "Discord"];
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -45,29 +43,24 @@ fn main() {
             println!("Latest Notification ID has decreased (Notifications were probably cleared)");
             print_sep();
             current_id = now_id.id;
-        } else {};
-
-        let new_notifications = db::get_new_notifications(LastId { id: current_id }, &x);
-        match new_notifications {
-            Ok(notifications) => {
-                for n in notifications.notifications {
-                    match allow_notification(&n.app) {
-                        true => {
-                            pn::try_send_notification(&n.notification_string(), &args.webhook);
-                            print_sep();
-                        }
-                        false => {
-                            println!("Notification ignored");
-                            print_sep();
-                        }
-                    }
-                }
-                current_id = notifications.new_last_id;
-            }
-
-            _ => {}
         }
 
+        let new_notifications = db::get_new_notifications(LastId { id: current_id }, &x);
+        if let Ok(notifications) = new_notifications {
+            for n in notifications.notifications {
+                match allow_notification(&n.app) {
+                    true => {
+                        pn::try_send_notification(&n.notification_string(), &args.webhook);
+                        print_sep();
+                    }
+                    false => {
+                        println!("Notification ignored");
+                        print_sep();
+                    }
+                }
+            }
+            current_id = notifications.new_last_id;
+        }
         thread::sleep(Duration::from_secs(15));
     }
 }

@@ -1,7 +1,7 @@
 workspace = { members = ["src/db", "src/pn"] }
 [package]
 name = "proxnox"
-version = "0.4.1"
+version = "0.4.11"
 edition = "2021"
 description = "A tool to forward MacOS notifications to Discord webhooks"
 repository = "https://github.com/zeph1rus/proxnox/"

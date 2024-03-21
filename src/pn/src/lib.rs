@@ -1,7 +1,6 @@
 use std::fmt;
 use std::os::macos::fs::MetadataExt;
 
-use reqwest;
 use serde::{Deserialize, Serialize};
 use users::get_current_uid;
 use walkdir::WalkDir;
@@ -73,5 +72,5 @@ pub fn find_db(path: &str) -> Result<String, NotFoundError> {
             }
         };
     }
-    return Err(NotFoundError);
+    Err(NotFoundError)
 }
