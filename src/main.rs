@@ -4,7 +4,7 @@ use std::time::Duration;
 use clap::Parser;
 
 use db;
-use db::LastId;
+use db::{get_latest_notification_id, LastId};
 use pn;
 
 const IGNORE_APPS: [&'static str; 2] = ["discord", "Discord"];
@@ -34,12 +34,19 @@ fn main() {
 
     let x = pn::find_db("/private/var").unwrap();
 
-    let lastid = db::get_latest_notification_id(&x).unwrap();
+    let lastid = get_latest_notification_id(&x).unwrap();
     println!("Initial Notification ID: {:?}", lastid.id);
     print_sep();
     let mut current_id: u32 = lastid.id;
 
     loop {
+        let now_id = get_latest_notification_id(&x).unwrap();
+        if now_id.id < current_id {
+            println!("Latest Notification ID has decreased (Notifications were probably cleared)");
+            print_sep();
+            current_id = now_id.id;
+        } else {};
+
         let new_notifications = db::get_new_notifications(LastId { id: current_id }, &x);
         match new_notifications {
             Ok(notifications) => {
@@ -61,6 +68,6 @@ fn main() {
             _ => {}
         }
 
-        thread::sleep(Duration::from_secs(10));
+        thread::sleep(Duration::from_secs(15));
     }
 }
